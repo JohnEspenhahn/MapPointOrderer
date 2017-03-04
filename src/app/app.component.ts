@@ -131,8 +131,6 @@ export class AppComponent implements OnInit {
   clickedMarker(item: RouteItemExtra) {
     if (item.isUnsorted()) {
       this.sort(item);
-    } else {
-      this.unsort(item);
     }
   }
 
@@ -146,9 +144,9 @@ export class AppComponent implements OnInit {
   }
 
   /// Add a street direction to the sorted list from the prompt
-  addStreet(prefix: string) {
+  addStreet(prefix: string, hideStreet: boolean = false) {
     this.sorted.unshift(new RouteItemExtra({
-      sDirection: `${prefix} ${this.promptStreet}`
+      sDirection: prefix + (hideStreet ? '' : ` ${this.promptStreet}`)
     }));
     this.closePromptStreet();
   }
