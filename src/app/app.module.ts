@@ -3,7 +3,10 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
+import { AgmCoreModule, GoogleMapsAPIWrapper } from 'angular2-google-maps/core';
+
 import { AppComponent } from './app.component';
+import { EndpointsService } from './endpoints.service';
 
 @NgModule({
   declarations: [
@@ -12,9 +15,15 @@ import { AppComponent } from './app.component';
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
+    AgmCoreModule.forRoot({
+      apiKey: 'AIzaSyBDMKUIpFoohScPnujC4VQCHTPJQAQMk1s'
+    })
   ],
-  providers: [],
+  providers: [
+    EndpointsService,
+    GoogleMapsAPIWrapper
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

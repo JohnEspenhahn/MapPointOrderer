@@ -1,3 +1,62 @@
-<h1>
-  {{title}}
-</h1>
+<div id="map-wrapper">
+  <sebm-google-map [latitude]="lat" [longitude]="lng" [zoom]="13" (mapClick)="onMapClick($event)">
+    <sebm-google-map-marker 
+      *ngFor="let m of markers; let i = index"
+      (markerClick)="clickedMarker(m)"
+      [latitude]="m.address_lat"
+      [longitude]="m.address_lng"
+      [markerDraggable]="false"
+      [iconUrl]="m.iSortOrder === 0 ? 'assets/blue-dot2.png' : 'assets/green-dot2.png'"
+      [zIndex]="m.iSortOrder === 0 ? 1000 : m.iSortOrder">
+    </sebm-google-map-marker>
+  </sebm-google-map>
+</div>
+
+<div id="side-wrapper">
+  <div id="top">
+    <div class="panel panel-default">
+      <div class="panel-heading">Sorted</div>
+      <table class="table table-hover">
+        <tbody>
+          <tr *ngFor="let item of sorted; let i = index">
+            <td [ngClass]="{ 'warning': item.flagged }">
+              <b>{{ sorted.length-i }}.</b> {{ item.sDirection || (item.sHseNum + ' ' + item.sStreet) }}
+
+              <button *ngIf="item.iLineInTheSand != 1" (click)="unsort(item)" type="button" class="btn btn-secondary pull-right">Reset</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="bottom">
+    <div class="panel panel-default">
+      <div class="panel-heading">Unsorted</div>
+      <table class="table table-hover">
+        <tbody>
+          <tr *ngFor="let item of unsorted">
+            <td [ngClass]="{ 'warning': item.flagged }" (click)="onClickedUnsorted(item)">
+              {{ item.sDirection || (item.sHseNum + ' ' + item.sStreet) }}
+
+              <button (click)="sort(item)" type="button" class="btn btn-secondary pull-right">Sort</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="prompt" *ngIf="promptStreet">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <span>{{ promptStreet }}</span>
+        <button type="button" class="btn btn-primary" (click)="addStreet('LT onto')">LT onto</button>
+        <button type="button" class="btn btn-primary" (click)="addStreet('RT onto')">RT onto</button>
+        <button type="button" class="btn btn-default" (click)="cancelPromptStreet()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

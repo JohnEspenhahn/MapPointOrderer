@@ -1,0 +1,34 @@
+.sebm-google-map-container {
+  height: 500px;
+}
+
+#map-wrapper {
+  display: block;
+  width: 70%;
+  height: 100%;
+  float: left;
+}
+
+#side-wrapper {
+  width: 30%;
+  height: 100%;
+  float: right;
+}
+
+#top {
+  height: 50%;
+  overflow-y: scroll;
+  margin:auto;
+}
+
+#bottom {
+  height: 50%;
+  overflow-y: scroll;
+  margin:auto;
+}
+
+#prompt {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+}
