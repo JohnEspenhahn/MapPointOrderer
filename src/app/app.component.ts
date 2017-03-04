@@ -1,34 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EndpointsService, RouteItem } from "./endpoints.service";
 import { GoogleMapsAPIWrapper } from 'angular2-google-maps/core';
-
-class RouteItemExtra extends RouteItem {
-  flagged: boolean;
-
-  constructor(item: RouteItem) {
-    super();
-
-    this.address_lat = item.address_lat;
-    this.address_lng = item.address_lng;
-    this.iGeocodeID = item.iGeocodeID;
-    this.iLineInTheSand = item.iLineInTheSand;
-    this.iSortOrder = item.iSortOrder;
-    this.sDirection = item.sDirection;
-    this.sHseNum = item.sHseNum;
-    this.sRouteID_Combo = item.sRouteID_Combo;
-    this.sStreet = item.sStreet;
-
-    this.flagged = false;
-  }
-
-  isPoint(): boolean {
-    return (!!this.address_lng && !!this.address_lat);
-  }
-
-  isUnsorted(): boolean {
-    return this.iSortOrder === 0;
-  }
-}
+import { RouteItemExtra } from "./models/RouteItemExtra";
 
 @Component({
   selector: 'app-root',
@@ -51,14 +24,15 @@ export class AppComponent implements OnInit {
   constructor(private endpoints: EndpointsService, private api: GoogleMapsAPIWrapper) { }
 
   ngOnInit() {
-    this.load(prompt("What route would you like to work on?", "NOGA1200"));
+    var routeID = prompt("What route would you like to work on?", "NOGA1200");
+    this.load(routeID);
   }
 
   load(routeID: string) {
     this.sorted = [];
     this.unsorted = [];
     this.markers  = [];
-    this.unsaved = true;
+    this.unsaved = false;
     this.promptStreet = null;
     this.activeRoute = routeID;
     
@@ -66,7 +40,7 @@ export class AppComponent implements OnInit {
       for (let item of items) {
         var ie = new RouteItemExtra(item);
         if (item.iLineInTheSand === 1)
-          this.sorted.unshift(ie);
+          this.sorted.unshift(ie); // Flipped so newly sorted items show at top of list
         else if (item.iSortOrder === 0) {
           this.unsorted.push(ie);
         } else {
@@ -86,26 +60,63 @@ export class AppComponent implements OnInit {
     });
   }
 
+  save() {
+    this.unsaved = false;
+
+    var items = [];
+
+    // Add sorted
+    for (let i = 1, ii = this.sorted.length; i <= ii; i++) {
+      let item = this.sorted[ii-i]; // Unflip the list
+      if (item.iLineInTheSand === 1) continue;
+
+      items.push({ 
+        sDirection: item.sDirection || '',
+        iDirectionID: item.iDirectionID || -1,
+        iSortOrder: i
+      });
+    }
+
+    // Add unsorted, preexisting
+    for (let item of this.unsorted) {
+      if (!item.iDirectionID) continue;
+
+      items.push({
+        iDirectionID: item.iDirectionID,
+        iSortOrder: 0
+      });
+    }
+
+    this.endpoints.putRouteItems(this.activeRoute, items).catch(() => this.unsaved = true);
+  }
+
+  /// Temporarially highlight an item
   flagItem(item: RouteItemExtra) {
+    this.unsaved = true;
     item.flagged = true;
     setTimeout(() => item.flagged = false, 2000);
   }
 
+  /// Click an unsorted item from the side list
   onClickedUnsorted(item: RouteItemExtra) {
     if (item.isPoint()) {
       this.api.panTo({ lat: item.address_lat, lng: item.address_lng });
     }
   }
 
+  /// Move item to the unsorted list
   unsort(item: RouteItemExtra) {
-    this.flagItem(item);
-
     this.sorted.splice(this.sorted.indexOf(item), 1);
-    this.unsorted.unshift(item);
 
-    item.iSortOrder = 0;
+    // If already existing in the database, move to other list
+    if (item.iDirectionID) {
+      this.flagItem(item);
+      this.unsorted.unshift(item);
+      item.iSortOrder = 0;
+    }
   }
 
+  /// Move an item to the sorted list
   sort(item: RouteItemExtra) {
     this.flagItem(item);
 
@@ -113,9 +124,10 @@ export class AppComponent implements OnInit {
     this.unsorted.splice(this.unsorted.indexOf(item), 1);
     this.sorted.unshift(item);
 
-    localStorage.setItem("sorted-" + this.activeRoute, JSON.stringify(this.sorted));
+    this.saveLocal();
   }
 
+  /// Clicked on a marker
   clickedMarker(item: RouteItemExtra) {
     if (item.isUnsorted()) {
       this.sort(item);
@@ -124,15 +136,35 @@ export class AppComponent implements OnInit {
     }
   }
 
+  /// Click on the map, open street directions prompt
   onMapClick(event) {
-    if (event.coords)
-      this.endpoints.geocode(event.coords.lat, event.coords.lng).then((street) => {
-        console.log(street);
-        this.promptStreet = street;
-      });
+    if (!event.coords) return;
+
+    this.endpoints.geocode(event.coords.lat, event.coords.lng).then((street) => {
+      this.promptStreet = street;
+    });
   }
 
-  cancelPromptStreet() {
+  /// Add a street direction to the sorted list from the prompt
+  addStreet(prefix: string) {
+    this.sorted.unshift(new RouteItemExtra({
+      sDirection: `${prefix} ${this.promptStreet}`
+    }));
+    this.closePromptStreet();
+  }
+
+  /// Close the prompt for street directions
+  closePromptStreet() {
     this.promptStreet = null;
+  }
+
+  /// Save modified values to local storage
+  saveLocal() {
+    localStorage.setItem("unsorted-" + this.activeRoute, JSON.stringify(this.unsorted));
+    localStorage.setItem("sorted-" + this.activeRoute, JSON.stringify(this.sorted));
+  }
+
+  loadLocal(routeID) {
+    // TODO
   }
 }

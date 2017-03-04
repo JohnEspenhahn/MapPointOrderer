@@ -3,16 +3,16 @@ import { Http } from '@angular/http';
 import 'rxjs/add/operator/toPromise';
 
 export class RouteItem {
-  sRouteID_Combo: string;
-  iSortOrder: number;
+  sRouteID_Combo?: string;
+  iSortOrder?: number;
   sDirection: string;
-  iDirectionID: number;
-  iLineInTheSand: number;
-  sHseNum: string;
-  sStreet: string;
-  address_lat: number;
-  address_lng: number;
-  iGeocodeID: number;
+  iDirectionID?: number;
+  iLineInTheSand?: number;
+  sHseNum?: string;
+  sStreet?: string;
+  address_lat?: number;
+  address_lng?: number;
+  iGeocodeID?: number;
 }
 
 @Injectable()
@@ -26,8 +26,9 @@ export class EndpointsService {
               .toPromise().then(res => res.json() as RouteItem[]);
   }
 
-  putRoute(items: RouteItem[]) {
-    this.http.put(`/php/Endpoints.php`, items);
+  putRouteItems(sRouteID_Combo: string, items: RouteItem[]): Promise<any> {
+    return this.http.put(`/php/Endpoints.php/route/${sRouteID_Combo}`, items)
+              .toPromise().catch((err) => alert("Failed to save! " + err));
   }
 
   geocode(lat: number, lng: number): Promise<string> {

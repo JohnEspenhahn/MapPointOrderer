@@ -48,14 +48,21 @@
   </div>
 </div>
 
-<div id="prompt" *ngIf="promptStreet">
+<div id="prompt">
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-12">
-        <span>{{ promptStreet }}</span>
-        <button type="button" class="btn btn-primary" (click)="addStreet('LT onto')">LT onto</button>
-        <button type="button" class="btn btn-primary" (click)="addStreet('RT onto')">RT onto</button>
-        <button type="button" class="btn btn-default" (click)="cancelPromptStreet()">Cancel</button>
+      <div class="col-md-8">
+        <span *ngIf="promptStreet">
+          <span>{{ promptStreet }}</span>
+          <button type="button" class="btn btn-primary" (click)="addStreet('LT onto')">LT onto</button>
+          <button type="button" class="btn btn-primary" (click)="addStreet('RT onto')">RT onto</button>
+          <button type="button" class="btn btn-default" (click)="closePromptStreet()">Cancel</button>
+        </span>
+      </div>
+      <div class="col-md-4">
+        <span *ngIf="unsaved">
+          <button type="button" class="btn btn-warning pull-right" (click)="save()">Save New Changes</button>
+        </span>
       </div>
     </div>
   </div>

@@ -24,10 +24,7 @@
               WHERE d.sRouteID_Combo = ?
               ORDER BY iLineInTheSand DESC, iSortOrder";
 
-      if (!($stmt = $this->mysqli->prepare($sql))) {
-        throw new Exception("Failed to prepare " . $mysqli->error);
-      }
-
+      $stmt = $this->mysqli->prepare($sql);
       if (!$stmt->bind_param("s", $sRouteID_Combo)) {
         throw new Exception("Failed to bind parameter " . $mysqli->error);
       }
@@ -42,25 +39,38 @@
         $arr[] = $row;
       }
       $res->close();
+      $stmt->close();
 
       return $arr;
     }
 
-    function updateDirectionOrder($iDirectionID, $iSortOrder) {
+    function updateDirectionOrder($sRouteID_Combo, $iDirectionID, $iSortOrder, $sDirection) {
       if ($this->mysqli == null) throw new Exception("Not connected");
 
-      $sql = "UPDATE direction SET iSortOrder = ? WHERE iDirectionID = ?";
+      // Updaing sort of an existing direction
+      $iSortOrder = intval($iSortOrder);
+      $iDirectionID = intval($iDirectionID);
+      if ($iDirectionID >= 0) {
+        $sql = "UPDATE direction SET iSortOrder = " . $iSortOrder . " WHERE iDirectionID = " . $iDirectionID;
+        if (!$this->mysqli->query($sql)) {
+          throw new Exception("Error updating record: " . $conn->error);
+        }
 
-      if (!($stmt = $this->mysqli->prepare($sql))) {
-        throw new Exception("Failed to prepare " . $mysqli->error);
-      }
+      // A new direction string entry
+      } else if (strlen($sDirection) > 0) {
+        $sql = "INSERT INTO direction (sRouteID_Combo, iSortOrder, sDirection, dUpdatedOn, sUserID) 
+                VALUES (?, ?, ?, NOW(), 'nspainhower')";
 
-      if (!$stmt->bind_param("ii", $iDirectionID, $iSortOrder)) {
-        throw new Exception("Failed to bind parameter " . $mysqli->error);
-      }
+        $stmt = $this->mysqli->prepare($sql);
+        if (!$stmt->bind_param("sss", $sRouteID_Combo, $iSortOrder, $sDirection)) {
+          throw new Exception("Failed to bind parameters");
+        }
+        
+        if (!$stmt->execute()) {
+          throw new Exception("Faied to insert new direction");
+        }
 
-      if (!$stmt->execute()) {
-        throw new Exception("Execute failed: (" . $stmt->errno . ") " . $stmt->error);
+        $stmt->close();
       }
     }
     

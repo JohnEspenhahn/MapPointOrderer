@@ -5,7 +5,7 @@
   switch($_SERVER['REQUEST_METHOD'])
   {
   case 'GET': 
-    // /route/?sRouteID_Combo=<string>
+    // /route/<sRouteID_Combo>
     if (sizeof($request) == 2 and $request[0] == 'route') {
       $dbf = new DbFunctions();
       $ok = $dbf->connect();
@@ -28,8 +28,8 @@
     }
     break;
   case 'PUT': 
-    // /route
-    if (sizeof($request) == 1 and $request[0] == 'route') {
+    // /route/<sRouteID_Combo>
+    if (sizeof($request) == 2 and $request[0] == 'route') {
       $dbf = new DbFunctions();
       $ok = $dbf->connect();
       if (!$ok) {
@@ -39,9 +39,9 @@
 
       // Perform request and handle errors with request
       try {
-        $body = json_decode(file_get_contents('php://input'));
+        $body = json_decode(file_get_contents('php://input'), true);
         foreach ($body as $row) {
-          $dbf->updateDirectionOrder($row['iDirectionID'], $row['iSortOrder']);
+          $dbf->updateDirectionOrder($request[1], $row['iDirectionID'], $row['iSortOrder'], $row['sDirection']);
         }
       } catch (Exception $e) {
         http_response_code(404);
@@ -49,7 +49,7 @@
       }
 
       // Output response
-      echo '{ "result": "ok" }'
+      echo '{ "result": "ok" }';
       $dbf->close();
     }
     break;
