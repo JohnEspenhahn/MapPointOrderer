@@ -22,12 +22,12 @@ export class EndpointsService {
   constructor(private http: Http) { }
 
   getRoute(sRouteID_Combo: string): Promise<RouteItem[]> {
-    return this.http.get(`/php/Endpoints.php/route/${sRouteID_Combo}`)
+    return this.http.get(`php/Endpoints.php/route/${sRouteID_Combo}`)
               .toPromise().then(res => res.json() as RouteItem[]);
   }
 
   putRouteItems(sRouteID_Combo: string, items: RouteItem[]): Promise<any> {
-    return this.http.put(`/php/Endpoints.php/route/${sRouteID_Combo}`, items)
+    return this.http.put(`php/Endpoints.php/route/${sRouteID_Combo}`, items)
               .toPromise().catch((err) => alert("Failed to save! " + err));
   }
 
