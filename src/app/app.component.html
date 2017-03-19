@@ -1,11 +1,12 @@
 <div id="map-wrapper">
-  <sebm-google-map [latitude]="lat" [longitude]="lng" [zoom]="13" (mapClick)="onMapClick($event)">
+  <sebm-google-map [latitude]="lat" [longitude]="lng" [zoom]="13" [mapTypeControl]="true" (mapClick)="onMapClick($event)">
     <sebm-google-map-marker 
       *ngFor="let m of markers; let i = index"
       (markerClick)="clickedMarker(m)"
       [latitude]="m.address_lat"
       [longitude]="m.address_lng"
       [markerDraggable]="false"
+      [label]="m.isUnsorted() ? '' : '' + m.iSortOrder"
       [iconUrl]="m.isUnsorted() ? 'assets/blue-dot2.png' : 'assets/green-dot2.png'"
       [zIndex]="m.isUnsorted() ? 1000 : m.iSortOrder">
     </sebm-google-map-marker>
@@ -61,6 +62,7 @@
           <button type="button" class="btn btn-primary" (click)="addStreet('Cross Over')">Cross Over</button>
           <button type="button" class="btn btn-primary" (click)="addStreet('Continue On ')">Continue On</button>
           <button type="button" class="btn btn-primary" (click)="addStreet('Go Back To')">Go Back To</button>
+          <button type="button" class="btn btn-primary" (click)="addStreet('Pass ')">Pass</button>
           <button type="button" class="btn btn-primary" (click)="addStreet('Turn Around', true)">Turn around</button>
           <button type="button" class="btn btn-default" (click)="closePromptStreet()">Cancel</button>
         </span>

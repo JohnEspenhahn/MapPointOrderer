@@ -82,6 +82,7 @@ export class AppComponent implements OnInit {
       if (!item.iDirectionID) continue;
 
       items.push({
+        sDirection: '',
         iDirectionID: item.iDirectionID,
         iSortOrder: 0
       });
@@ -106,7 +107,8 @@ export class AppComponent implements OnInit {
 
   /// Move item to the unsorted list
   unsort(item: RouteItemExtra) {
-    this.sorted.splice(this.sorted.indexOf(item), 1);
+    let idx = this.sorted.indexOf(item);
+    this.sorted.splice(idx, 1);
 
     // If already existing in the database, move to other list
     if (item.iDirectionID) {
@@ -114,17 +116,30 @@ export class AppComponent implements OnInit {
       this.unsorted.unshift(item);
       item.iSortOrder = 0;
     }
+
+    // Update following items order
+    for (let i = idx+1, ii = this.sorted.length; i <= ii; i++)
+      this.sorted[ii-i].iSortOrder = i;
   }
 
   /// Move an item to the sorted list
   sort(item: RouteItemExtra) {
     this.flagItem(item);
 
-    item.iSortOrder = this.sorted.length;
+    item.iSortOrder = this.sorted.length+1;
     this.unsorted.splice(this.unsorted.indexOf(item), 1);
     this.sorted.unshift(item);
 
     this.saveLocal();
+  }
+
+  /// Add a street direction to the sorted list from the prompt
+  addStreet(prefix: string, hideStreet: boolean = false) {
+    this.sorted.unshift(new RouteItemExtra({
+      iSortOrder: this.sorted.length+1,
+      sDirection: prefix + (hideStreet ? '' : ` ${this.promptStreet}`)
+    }));
+    this.closePromptStreet();
   }
 
   /// Clicked on a marker
@@ -141,14 +156,6 @@ export class AppComponent implements OnInit {
     this.endpoints.geocode(event.coords.lat, event.coords.lng).then((street) => {
       this.promptStreet = street;
     });
-  }
-
-  /// Add a street direction to the sorted list from the prompt
-  addStreet(prefix: string, hideStreet: boolean = false) {
-    this.sorted.unshift(new RouteItemExtra({
-      sDirection: prefix + (hideStreet ? '' : ` ${this.promptStreet}`)
-    }));
-    this.closePromptStreet();
   }
 
   /// Close the prompt for street directions
