@@ -5,7 +5,7 @@
     
     function connect() {
       $mysqli = new mysqli('localhost', 'root', 'root', 'ncds');
-      $err = ($this->mysqli->connect_errno);
+      $err = $mysqli->connect_errno;
       if (!$err) {
         $this->mysqli = $mysqli;
         return true;
