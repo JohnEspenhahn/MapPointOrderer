@@ -13,6 +13,7 @@ export class RouteItemExtra extends RouteItem {
     this.iSortOrder = item.iSortOrder;
     this.sDirection = item.sDirection;
     this.iDirectionID = item.iDirectionID;
+    this.iDeleted = item.iDeleted;
     this.sHseNum = item.sHseNum;
     this.sRouteID_Combo = item.sRouteID_Combo;
     this.sStreet = item.sStreet;

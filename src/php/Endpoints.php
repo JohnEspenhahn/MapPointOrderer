@@ -41,7 +41,7 @@
       try {
         $body = json_decode(file_get_contents('php://input'), true);
         foreach ($body as $row) {
-          $dbf->updateDirectionOrder($request[1], $row['iDirectionID'], $row['iSortOrder'], $row['sDirection']);
+          $dbf->updateDirectionOrder($request[1], $row);
         }
       } catch (Exception $e) {
         http_response_code(404);

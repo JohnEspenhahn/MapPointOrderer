@@ -13,6 +13,8 @@ export class AppComponent implements OnInit {
 
   sorted: RouteItemExtra[] = [];
   unsorted: RouteItemExtra[] = [];
+  toDelete: RouteItemExtra[] = [];
+
   markers = [];
 
   promptStreet: string;
@@ -39,9 +41,10 @@ export class AppComponent implements OnInit {
     this.endpoints.getRoute(routeID).then((items) => {
       for (let item of items) {
         var ie = new RouteItemExtra(item);
-        if (item.iLineInTheSand === 1)
-          this.sorted.unshift(ie); // Flipped so newly sorted items show at top of list
-        else if (item.iSortOrder === 0) {
+        if (item.iLineInTheSand === 1) {
+          // Flipped so newly sorted items show at top of list
+          this.sorted.unshift(ie); 
+        } else if (item.iSortOrder === 0) {
           this.unsorted.push(ie);
         } else {
           this.sorted.unshift(ie);
@@ -63,29 +66,35 @@ export class AppComponent implements OnInit {
   save() {
     this.unsaved = false;
 
-    var items = [];
+    var items: RouteItem[] = [];
 
     // Add sorted
     for (let i = 1, ii = this.sorted.length; i <= ii; i++) {
       let item = this.sorted[ii-i]; // Unflip the list
       if (item.iLineInTheSand === 1) continue;
-
-      items.push({ 
-        sDirection: item.sDirection || '',
-        iDirectionID: item.iDirectionID || -1,
-        iSortOrder: i
-      });
+      item.iSortOrder = i;
+      item.iDeleted = 0;
+      items.push(item);
     }
 
     // Add unsorted, preexisting
     for (let item of this.unsorted) {
-      if (!item.iDirectionID) continue;
+      // not in db, unsorted so don't add
+      if (item.iDirectionID < 0) continue;
 
-      items.push({
-        sDirection: '',
-        iDirectionID: item.iDirectionID,
-        iSortOrder: 0
-      });
+      item.iSortOrder = 0;
+      item.iDeleted = 0;
+      items.push(item);
+    }
+
+    // Add items to be deleted
+    for (let item of this.toDelete) {
+      // not in db, unsorted to don't add
+      if (item.iDirectionID < 0) continue;
+      
+      item.iSortOrder = 0;
+      item.iDeleted = 1;
+      items.push(item);
     }
 
     this.endpoints.putRouteItems(this.activeRoute, items).catch(() => this.unsaved = true);
@@ -111,10 +120,18 @@ export class AppComponent implements OnInit {
     this.sorted.splice(idx, 1);
 
     // If already existing in the database, move to other list
-    if (item.iDirectionID) {
-      this.flagItem(item);
-      this.unsorted.unshift(item);
+    if (item.iDirectionID >= 0) {
       item.iSortOrder = 0;
+
+      if (!item.sDirection) {
+        // Not a driving direction, so move
+        this.flagItem(item);
+        this.unsorted.unshift(item);
+      } else {
+        // Was a preexisting driving direction, flag to delete
+        item.iDeleted = 1;
+        this.toDelete.unshift(item);
+      }
     }
 
     // Update following items order
@@ -136,6 +153,8 @@ export class AppComponent implements OnInit {
   /// Add a street direction to the sorted list from the prompt
   addStreet(prefix: string, hideStreet: boolean = false) {
     this.sorted.unshift(new RouteItemExtra({
+      iDeleted: 0,
+      iDirectionID: -1,
       iSortOrder: this.sorted.length+1,
       sDirection: prefix + (hideStreet ? '' : ` ${this.promptStreet}`)
     }));
@@ -165,6 +184,7 @@ export class AppComponent implements OnInit {
 
   /// Save modified values to local storage
   saveLocal() {
+    localStorage.setItem("toDelete-" + this.activeRoute, JSON.stringify(this.toDelete));
     localStorage.setItem("unsorted-" + this.activeRoute, JSON.stringify(this.unsorted));
     localStorage.setItem("sorted-" + this.activeRoute, JSON.stringify(this.sorted));
   }
