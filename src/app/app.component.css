@@ -30,6 +30,21 @@
 #prompt {
   position: fixed;
   bottom: 10px;
-  left: 10px;
-  width: 70%;
+  left: 1%;
+  width: 68%;
+  padding-bottom: 3px;
+
+  background: #fdfdfd;
+  border-radius: 4px;
+}
+
+button {
+  margin-top: 2px;
+}
+
+.row.cols-close:first-child {
+  padding-right: 2px;
+}
+.row.cols-close:last-child {
+  padding-left: 1px;
 }

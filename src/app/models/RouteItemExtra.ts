@@ -1,9 +1,13 @@
-import { RouteItem } from "../endpoints.service";
+import { RightOrLeft } from "./RightOrLeft";
+import { RouteItem } from "./RouteItem";
 
 export class RouteItemExtra extends RouteItem {
   flagged: boolean;
+  flaggedTimeoutId: number;
 
-  constructor(item: RouteItem) {
+  sStreetOnThe: RightOrLeft;
+
+  constructor(item: RouteItem, sStreetOnThe: RightOrLeft = "") {
     super();
 
     this.address_lat = item.address_lat;
@@ -17,8 +21,16 @@ export class RouteItemExtra extends RouteItem {
     this.sHseNum = item.sHseNum;
     this.sRouteID_Combo = item.sRouteID_Combo;
     this.sStreet = item.sStreet;
+    this.sStreetOnThe = sStreetOnThe;
 
     this.flagged = false;
+  }
+
+  getDisplayText(): string {
+    if (this.sDirection)
+      return `${this.sDirection} ${this.sStreetOnThe}`;
+    else
+      return `${this.sHseNum} ${this.sStreet}`;
   }
 
   isPoint(): boolean {

@@ -52,11 +52,12 @@
       $iDeleted = intval(isset($row['iDeleted']) ? $row['iDeleted'] : 0);
       
       $sDirection = isset($row['sDirection']) ? $row['sDirection'] : '';
+      if (isset($row['sStreetOnThe'])) $sDirection .= ' ' . $row['sStreetOnThe'];
 
       if ($iDirectionID >= 0) {
-        updateDirection($iSortOrder, $iDeleted, $iDirectionID);
+        $this->updateDirection($iSortOrder, $iDeleted, $iDirectionID);
       } else if (strlen($sDirection) > 0 && $iDeleted == 0) {
-        insertDirection($sRouteID_Combo, $iSortOrder, $sDirection);
+        $this->insertDirection($sRouteID_Combo, $iSortOrder, $sDirection);
       }
     }
 

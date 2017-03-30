@@ -1,0 +1,1 @@
+export type RightOrLeft = "On the Right" | "On the Left" | "";

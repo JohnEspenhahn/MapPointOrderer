@@ -1,20 +1,7 @@
+import { RouteItem } from "./models/RouteItem";
 import { Injectable } from '@angular/core';
 import { Http } from '@angular/http';
 import 'rxjs/add/operator/toPromise';
-
-export abstract class RouteItem {
-  sRouteID_Combo?: string;
-  iSortOrder: number;
-  sDirection?: string;
-  iDirectionID: number;
-  iLineInTheSand?: number;
-  iDeleted: number;
-  sHseNum?: string;
-  sStreet?: string;
-  address_lat?: number;
-  address_lng?: number;
-  iGeocodeID?: number;
-}
 
 @Injectable()
 export class EndpointsService {

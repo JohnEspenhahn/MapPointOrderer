@@ -1,0 +1,6 @@
+<span class="td" [ngClass]="{ 'bg-warning': item.flagged }">
+  <b>{{ item.iSortOrder }}.</b> {{ item.getDisplayText() }}
+
+  <button *ngIf="item.iLineInTheSand != 1" (click)="reset()" type="button" 
+      class="btn btn-secondary pull-right">Reset</button>
+</span>

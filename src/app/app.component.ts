@@ -1,7 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { EndpointsService, RouteItem } from "./endpoints.service";
+import { Component, OnInit, ViewChild, ElementRef, ContentChildren, ViewChildren, QueryList } from '@angular/core';
+import { RowsortedComponent } from "./rowsorted/rowsorted.component";
 import { GoogleMapsAPIWrapper } from 'angular2-google-maps/core';
 import { RouteItemExtra } from "./models/RouteItemExtra";
+import { EndpointsService } from "./endpoints.service";
+import { SorterService } from "./sorter.service";
+import { RightOrLeft } from "./models/RightOrLeft";
+import { RouteItem } from "./models/RouteItem";
 
 @Component({
   selector: 'app-root',
@@ -9,21 +13,20 @@ import { RouteItemExtra } from "./models/RouteItemExtra";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  unsaved: boolean;
-
-  sorted: RouteItemExtra[] = [];
-  unsorted: RouteItemExtra[] = [];
-  toDelete: RouteItemExtra[] = [];
-
   markers = [];
 
+  @ViewChild('toppanel') toppanel: ElementRef;
+  @ViewChildren(RowsortedComponent) sortedRows: QueryList<RowsortedComponent>;
+
   promptStreet: string;
+  streetOnThe: RightOrLeft;
+
   activeRoute: string;
 
   lat: number;
   lng: number;
 
-  constructor(private endpoints: EndpointsService, private api: GoogleMapsAPIWrapper) { }
+  constructor(private endpoints: EndpointsService, private sorter: SorterService, private api: GoogleMapsAPIWrapper) { }
 
   ngOnInit() {
     var routeID = prompt("What route would you like to work on?", "NOGA1200");
@@ -31,23 +34,22 @@ export class AppComponent implements OnInit {
   }
 
   load(routeID: string) {
-    this.sorted = [];
-    this.unsorted = [];
     this.markers  = [];
-    this.unsaved = false;
     this.promptStreet = null;
     this.activeRoute = routeID;
+    this.streetOnThe = "";
     
+    this.sorter.reset();
     this.endpoints.getRoute(routeID).then((items) => {
       for (let item of items) {
         var ie = new RouteItemExtra(item);
         if (item.iLineInTheSand === 1) {
           // Flipped so newly sorted items show at top of list
-          this.sorted.unshift(ie); 
+          this.sorter.sort(ie); 
         } else if (item.iSortOrder === 0) {
-          this.unsorted.push(ie);
+          this.sorter.unsort(ie);
         } else {
-          this.sorted.unshift(ie);
+          this.sorter.sort(ie);
         }
 
         // Jump to first point found
@@ -60,111 +62,85 @@ export class AppComponent implements OnInit {
           }
         }
       }
+      this.sorter.setLoaded();
     });
   }
 
   save() {
-    this.unsaved = false;
+    this.sorter.setUnsaved(false);
 
     var items: RouteItem[] = [];
 
     // Add sorted
-    for (let i = 1, ii = this.sorted.length; i <= ii; i++) {
-      let item = this.sorted[ii-i]; // Unflip the list
-      if (item.iLineInTheSand === 1) continue;
-      item.iSortOrder = i;
+    this.sorter.forEach((item: RouteItemExtra, sorted: boolean) => {
+      if (item.iLineInTheSand === 1) return; // Don't allow updating "LineInTheSand" item
+      else if (!sorted && item.iDirectionID < 0) return; // Don't save new, unsorted items to db
+
       item.iDeleted = 0;
       items.push(item);
-    }
-
-    // Add unsorted, preexisting
-    for (let item of this.unsorted) {
-      // not in db, unsorted so don't add
-      if (item.iDirectionID < 0) continue;
-
-      item.iSortOrder = 0;
-      item.iDeleted = 0;
-      items.push(item);
-    }
+    });
 
     // Add items to be deleted
-    for (let item of this.toDelete) {
-      // not in db, unsorted to don't add
-      if (item.iDirectionID < 0) continue;
-      
+    this.sorter.executeDelete((item: RouteItemExtra) => {
+      // If not in db don't need to delete
+      if (item.iDirectionID < 0) return;
+
       item.iSortOrder = 0;
       item.iDeleted = 1;
       items.push(item);
-    }
+    });
 
-    this.endpoints.putRouteItems(this.activeRoute, items).catch(() => this.unsaved = true);
+    this.endpoints.putRouteItems(this.activeRoute, items)
+                    .catch(() => this.sorter.setUnsaved(true));
   }
 
-  /// Temporarially highlight an item
-  flagItem(item: RouteItemExtra) {
-    this.unsaved = true;
-    item.flagged = true;
-    setTimeout(() => item.flagged = false, 2000);
+  unsort(item: RouteItemExtra) {
+    this.sorter.unsort(item);
+  }
+
+  sort(item: RouteItemExtra) {
+    // this.toppanel.nativeElement.scrollTop = 0;
+    this.sorter.sort(item);
+  }
+
+  isUnsaved() {
+    return this.sorter.isUnsaved();
   }
 
   /// Click an unsorted item from the side list
   onClickedUnsorted(item: RouteItemExtra) {
     if (item.isPoint()) {
+      // TODO doesn't work for some reason???
       this.api.panTo({ lat: item.address_lat, lng: item.address_lng });
     }
   }
 
-  /// Move item to the unsorted list
-  unsort(item: RouteItemExtra) {
-    let idx = this.sorted.indexOf(item);
-    this.sorted.splice(idx, 1);
-
-    // If already existing in the database, move to other list
-    if (item.iDirectionID >= 0) {
-      item.iSortOrder = 0;
-
-      if (!item.sDirection) {
-        // Not a driving direction, so move
-        this.flagItem(item);
-        this.unsorted.unshift(item);
-      } else {
-        // Was a preexisting driving direction, flag to delete
-        item.iDeleted = 1;
-        this.toDelete.unshift(item);
-      }
-    }
-
-    // Update following items order
-    for (let i = idx+1, ii = this.sorted.length; i <= ii; i++)
-      this.sorted[ii-i].iSortOrder = i;
-  }
-
-  /// Move an item to the sorted list
-  sort(item: RouteItemExtra) {
-    this.flagItem(item);
-
-    item.iSortOrder = this.sorted.length+1;
-    this.unsorted.splice(this.unsorted.indexOf(item), 1);
-    this.sorted.unshift(item);
-
-    this.saveLocal();
-  }
-
   /// Add a street direction to the sorted list from the prompt
   addStreet(prefix: string, hideStreet: boolean = false) {
-    this.sorted.unshift(new RouteItemExtra({
+    this.sort(new RouteItemExtra({
       iDeleted: 0,
       iDirectionID: -1,
-      iSortOrder: this.sorted.length+1,
       sDirection: prefix + (hideStreet ? '' : ` ${this.promptStreet}`)
-    }));
+    }, this.streetOnThe));
     this.closePromptStreet();
+  }
+
+  addStreetCustom() {
+    this.streetOnThe = "";
+    var direction = prompt("Enter your custom direction");
+    if (direction && direction.length > 0) {
+      this.addStreet(direction, true);
+    }
   }
 
   /// Clicked on a marker
   clickedMarker(item: RouteItemExtra) {
     if (item.isUnsorted()) {
       this.sort(item);
+    } else {
+      var rows = this.sortedRows.filter(r => r.item.iSortOrder == item.iSortOrder);
+      if (rows.length > 0) 
+        this.toppanel.nativeElement.scrollTop = rows[0].el.nativeElement.offsetTop;
     }
   }
 
@@ -180,13 +156,7 @@ export class AppComponent implements OnInit {
   /// Close the prompt for street directions
   closePromptStreet() {
     this.promptStreet = null;
-  }
-
-  /// Save modified values to local storage
-  saveLocal() {
-    localStorage.setItem("toDelete-" + this.activeRoute, JSON.stringify(this.toDelete));
-    localStorage.setItem("unsorted-" + this.activeRoute, JSON.stringify(this.unsorted));
-    localStorage.setItem("sorted-" + this.activeRoute, JSON.stringify(this.sorted));
+    this.streetOnThe = "";
   }
 
   loadLocal(routeID) {
