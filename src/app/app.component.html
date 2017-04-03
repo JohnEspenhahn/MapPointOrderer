@@ -15,6 +15,18 @@
 
 <div id="side-wrapper">
   <div id="top" #toppanel>
+    <div>
+      <div class="col-sm-6 col-md-4 col-lg-3">
+        <label for="selectSide">On the</label>
+      </div>
+      <div class="col-sm-6 col-md-8 col-lg-9">
+        <select id="selectSide" class="form-control" [(ngModel)]="streetOnThe">
+          <option [ngValue]="''"></option>
+          <option [ngValue]="'On the Right'">Right</option>
+          <option [ngValue]="'On the Left'">Left</option>
+        </select>
+      </div>
+    </div>
     <div class="panel panel-default">
       <div class="panel-heading">Sorted</div>
       <div class="table">
@@ -56,16 +68,6 @@
         <button type="button" class="btn btn-primary" (click)="addStreet('Cross Over ')">Cross Over</button>
         <button type="button" class="btn btn-primary" (click)="addStreet('Turn Around', true)">Turn Around</button>
         <button type="button" class="btn btn-primary" (click)="addStreetCustom()">Custom</button>
-      </div>
-    </div>
-    <div class="row cols-close" *ngIf="promptStreet">
-      <h5 class="col-xs-6 col-sm-3 col-md-2 text-right">On the</h5>
-      <div class="col-xs-6 col-sm-4">
-        <select class="form-control" [(ngModel)]="streetOnThe">
-          <option [ngValue]="''"></option>
-          <option [ngValue]="'On the Left'">Left</option>
-          <option [ngValue]="'On the Right'">Right</option>
-        </select>
       </div>
     </div>
     <div class="row">

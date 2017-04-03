@@ -5,9 +5,7 @@ export class RouteItemExtra extends RouteItem {
   flagged: boolean;
   flaggedTimeoutId: number;
 
-  sStreetOnThe: RightOrLeft;
-
-  constructor(item: RouteItem, sStreetOnThe: RightOrLeft = "") {
+  constructor(item: RouteItem) {
     super();
 
     this.address_lat = item.address_lat;
@@ -21,16 +19,16 @@ export class RouteItemExtra extends RouteItem {
     this.sHseNum = item.sHseNum;
     this.sRouteID_Combo = item.sRouteID_Combo;
     this.sStreet = item.sStreet;
-    this.sStreetOnThe = sStreetOnThe;
+    this.sSideofStreet = item.sSideofStreet || "";
 
     this.flagged = false;
   }
 
   getDisplayText(): string {
     if (this.sDirection)
-      return `${this.sDirection} ${this.sStreetOnThe}`;
+      return this.sDirection;
     else
-      return `${this.sHseNum} ${this.sStreet}`;
+      return `${this.sHseNum} ${this.sStreet} ${this.sSideofStreet}`;
   }
 
   isPoint(): boolean {

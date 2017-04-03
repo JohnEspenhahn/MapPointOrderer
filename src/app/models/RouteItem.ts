@@ -1,3 +1,5 @@
+import { RightOrLeft } from "./RightOrLeft";
+
 export abstract class RouteItem {
   sRouteID_Combo?: string;
   iSortOrder?: number;
@@ -10,4 +12,5 @@ export abstract class RouteItem {
   address_lat?: number;
   address_lng?: number;
   iGeocodeID?: number;
+  sSideofStreet: RightOrLeft;
 }

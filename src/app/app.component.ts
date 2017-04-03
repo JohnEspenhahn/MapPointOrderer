@@ -95,11 +95,15 @@ export class AppComponent implements OnInit {
   }
 
   unsort(item: RouteItemExtra) {
+    item.sSideofStreet = "";
     this.sorter.unsort(item);
   }
 
   sort(item: RouteItemExtra) {
     // this.toppanel.nativeElement.scrollTop = 0;
+    item.sSideofStreet = this.streetOnThe;
+    this.streetOnThe = "";
+
     this.sorter.sort(item);
   }
 
@@ -120,13 +124,13 @@ export class AppComponent implements OnInit {
     this.sort(new RouteItemExtra({
       iDeleted: 0,
       iDirectionID: -1,
-      sDirection: prefix + (hideStreet ? '' : ` ${this.promptStreet}`)
-    }, this.streetOnThe));
+      sDirection: prefix + (hideStreet ? '' : ` ${this.promptStreet}`),
+      sSideofStreet: ''
+    }));
     this.closePromptStreet();
   }
 
   addStreetCustom() {
-    this.streetOnThe = "";
     var direction = prompt("Enter your custom direction");
     if (direction && direction.length > 0) {
       this.addStreet(direction, true);

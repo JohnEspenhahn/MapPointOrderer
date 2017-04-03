@@ -17,7 +17,7 @@
     function getRoute($sRouteID_Combo) {
       if ($this->mysqli == null) throw new Exception("Not connected");
       
-      $sql = "SELECT d.sRouteID_Combo, d.iSortOrder, d.sDirection, d.iDirectionID, iLineInTheSand, sHseNum, sStreet, address_lat, address_lng, a.iGeocodeID
+      $sql = "SELECT d.sRouteID_Combo, d.iSortOrder, d.sDirection, d.iDirectionID, iLineInTheSand, sHseNum, sStreet, address_lat, address_lng, a.iGeocodeID, d.sSideofStreet
               FROM Direction AS d
               LEFT JOIN Address AS a ON d.iAddressID = a.iAddressID
               LEFT JOIN Geocodes AS g ON g.iGeocodeID = a.iGeocodeID
@@ -50,22 +50,22 @@
       $iDirectionID = intval(isset($row['iDirectionID']) ? $row['iDirectionID'] : 0);
       $iSortOrder = intval(isset($row['iSortOrder']) ? $row['iSortOrder'] : 0);
       $iDeleted = intval(isset($row['iDeleted']) ? $row['iDeleted'] : 0);
-      
+
+      $sSideofStreet = isset($row['sSideofStreet']) ? $row['sSideofStreet'] : '';
       $sDirection = isset($row['sDirection']) ? $row['sDirection'] : '';
-      if (isset($row['sStreetOnThe'])) $sDirection .= ' ' . $row['sStreetOnThe'];
 
       if ($iDirectionID >= 0) {
-        $this->updateDirection($iSortOrder, $iDeleted, $iDirectionID);
+        $this->updateDirection($iSortOrder, $iDeleted, $iDirectionID, $sSideofStreet);
       } else if (strlen($sDirection) > 0 && $iDeleted == 0) {
-        $this->insertDirection($sRouteID_Combo, $iSortOrder, $sDirection);
+        $this->insertDirection($sRouteID_Combo, $iSortOrder, $sDirection, $sSideofStreet);
       }
     }
 
-    private function updateDirection($iSortOrder, $iDeleted, $iDirectionID) {
-      $sql = "UPDATE direction SET iSortOrder = ?, iDeleted = ? WHERE iDirectionID = ?";
+    private function updateDirection($iSortOrder, $iDeleted, $iDirectionID, $sSideofStreet) {
+      $sql = "UPDATE direction SET iSortOrder = ?, sSideofStreet = ?, iDeleted = ? WHERE iDirectionID = ?";
 
       $stmt = $this->mysqli->prepare($sql);
-      if (!$stmt->bind_param("iii", $iSortOrder, $iDeleted, $iDirectionID)) {
+      if (!$stmt->bind_param("isii", $iSortOrder, $sSideofStreet, $iDeleted, $iDirectionID)) {
         throw new Exception("Failed to bind parameters");
       }
 
@@ -76,12 +76,12 @@
       $stmt->close();
     }
 
-    private function insertDirection($sRouteID_Combo, $iSortOrder, $sDirection) {
-      $sql = "INSERT INTO direction (sRouteID_Combo, iSortOrder, sDirection, dUpdatedOn, sUserID) 
-              VALUES (?, ?, ?, NOW(), 'nspainhower')";
+    private function insertDirection($sRouteID_Combo, $iSortOrder, $sDirection, $sSideofStreet) {
+      $sql = "INSERT INTO direction (sRouteID_Combo, iSortOrder, sDirection, sSideofStreet, dUpdatedOn, sUserID) 
+              VALUES (?, ?, ?, ?, NOW(), 'nspainhower')";
 
       $stmt = $this->mysqli->prepare($sql);
-      if (!$stmt->bind_param("sss", $sRouteID_Combo, $iSortOrder, $sDirection)) {
+      if (!$stmt->bind_param("ssss", $sRouteID_Combo, $iSortOrder, $sDirection, $sSideofStreet)) {
         throw new Exception("Failed to bind parameters");
       }
       
