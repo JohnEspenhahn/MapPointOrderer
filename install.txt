@@ -1,0 +1,4 @@
+1. run `ng build -prod` to generate the static html/js in `dist/`
+  - then copy to the http_public/ directory on the server
+2. update php.ini on the server to ensure mysqli is installed
+3. copy src/php/ to the http_public/ directory on the server
